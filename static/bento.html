@@ -280,7 +280,7 @@ function logForm(f){const p=$('#pane2');let rm=0,rk=0;const today=new Date();con
 
 /* ---- 小票 ---- */
 function receipt(l){const d=document.createElement('div');d.className='rc';const no=(l.watched_at||'').replace(/-/g,'')+'-'+String(l.id||0).padStart(3,'0');const img=l.backdrop?'/api/bento/poster/w780'+l.backdrop:(l.poster?'/api/bento/poster/w500'+l.poster:'');
-  d.innerHTML='<img class="img" alt="" src="'+img+'"><button class="save">存成图片</button><div class="body"><div class="h">猫窝影厅 · 票号 '+esc(no)+'</div><div class="name">'+esc(l.title)+'</div><div class="orig">'+esc(l.title_orig||'')+' · '+(l.year||'')+'</div><div class="dash"></div>'
+  d.innerHTML='<img class="img" alt="" src="'+img+'"><button class="save">存成图片</button><div class="body"><div class="h">'+HALL_NAME+' · 票号 '+esc(no)+'</div><div class="name">'+esc(l.title)+'</div><div class="orig">'+esc(l.title_orig||'')+' · '+(l.year||'')+'</div><div class="dash"></div>'
   +'<div class="kv"><span>分量</span><span>'+esc([l.portion,l.runtime?l.runtime+' 分钟':''].filter(Boolean).join(' · '))+'</span></div><div class="kv"><span>菜系</span><span>'+esc([l.cuisine,(l.dishes||[]).join('/')].filter(Boolean).join(' · '))+'</span></div><div class="kv"><span>场次</span><span>'+esc(l.watched_at||'')+(l.source==='cinema'?' · 影院':'')+'</span></div><div class="kv"><span>座位</span><span>沙发 A1 · A2</span></div>'
   +((l.mood_in||l.mood_out)?'<div class="kv"><span>心情</span><span>'+esc(l.mood_in||'—')+' → '+esc(l.mood_out||'—')+'</span></div>':'')
   +(l.quote?'<div class="q">'+esc(l.quote)+'</div>':'')+'<div class="dash"></div>'
