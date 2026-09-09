@@ -8,7 +8,7 @@ import asyncio, json, os, re, sqlite3, sys, time
 from pathlib import Path
 import httpx
 
-ROOT = Path('/opt/claude-chat')
+ROOT = Path(os.environ.get('BENTO_ROOT', Path(__file__).resolve().parent.parent))
 DB = ROOT / 'data' / 'bento.db'
 LOG = Path('/tmp/bento_ingest.log')
 KEY = re.search(r'^TMDB_API_KEY=(.+)$', (ROOT / '.env').read_text(), re.M).group(1).strip()

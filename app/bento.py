@@ -15,6 +15,10 @@ DB = ROOT / "data" / "bento.db"
 POSTER_DIR = ROOT / "data" / "bento_posters"
 router = APIRouter()
 
+# 称呼与厅名可通过环境变量改: USER_NAME(用户) / AI_NAME(你的AI) / HALL_NAME(小票抬头)
+USER_NAME = os.environ.get("BENTO_USER_NAME", "主人")
+AI_NAME = os.environ.get("BENTO_AI_NAME", "主厨")
+
 
 def _require_auth(authorization: str = Header(default="")) -> None:
     token = authorization.removeprefix("Bearer ").strip()
@@ -311,7 +315,7 @@ async def tool_dispatch(args: dict) -> str:
         if not rows: return '厨房里没有符合条件的菜。可以放宽菜系/菜色/分量再试,或换个关键词。'
         items = [_row(r) for r in rows]
         if action == 'pick': items = random.sample(items, min(n, len(items)))
-        lines = ['找到以下候选。回复Stella时把要推荐的那几条标记原样放进正文(每行一个,会渲染成便当卡),并用你自己的话说说为什么是它:']
+        lines = [f'找到以下候选。回复{USER_NAME}时把要推荐的那几条标记原样放进正文(每行一个,会渲染成便当卡),并用你自己的话说说为什么是它:']
         for d in items: lines.append(card(d)); lines.append('  ' + _brief(d))
         return '\n'.join(lines)
     if action == 'detail':
@@ -331,7 +335,7 @@ async def tool_dispatch(args: dict) -> str:
             fid, args.get('watched_at') or now[:10], args.get('rating_me'), args.get('rating_k'), (args.get('note_me') or '')[:300], (args.get('note_k') or '')[:300],
             (args.get('mood_in') or '')[:20], (args.get('mood_out') or '')[:20], (args.get('quote') or '')[:200], None, 'chat', now))
         c.execute('DELETE FROM bento_wish WHERE film_id=?', (fid,)); c.commit()
-        return f'小票已打印(film_id={fid})。Stella 可以在电影便当的小票页看到。'
+        return f'小票已打印(film_id={fid})。{USER_NAME} 可以在电影便当的小票页看到。'
     if action == 'wishlist':
         rows = c.execute(f'SELECT {LIGHT} FROM films WHERE tmdb_id IN (SELECT film_id FROM bento_wish) ORDER BY rowid DESC LIMIT 20').fetchall()
         return '食单里还没有菜。' if not rows else '食单(想看):\n' + '\n'.join(_brief(_row(r)) + f' [film_id={r["tmdb_id"]}]' for r in rows)
@@ -343,7 +347,7 @@ async def tool_dispatch(args: dict) -> str:
 
 TOOL_DEF = {"type": "function", "function": {
     "name": "bento",
-    "description": "电影便当(精神食粮)厨房。action=pick 按Stella的口味和你对她近况的了解挑1-3部(默认排除吃过的); search 按片名/关键词/维度找; random 盲盒; detail 看某部详情; wish 记进食单(想看); log 记吃过了并打印小票(可带评分1-5、心情、一句话); wishlist 看食单; history 看吃过的。维度取值—菜系cuisine: 中餐/港片/日料/韩餐/美餐/法餐/意餐/英餐/泰餐/印度菜/伊朗菜/俄餐/德餐/西班牙菜/拉美菜/北欧菜; 菜色dish: 马卡龙(爱情)/河豚(恐怖)/生鱼片(惊悚)/螃蟹(悬疑)/炸鸡(喜剧)/茶泡饭(剧情)/铁板烧(动作)/分子料理(科幻)/棉花糖(奇幻)/熊饭团(动画)/卤煮(犯罪)/压缩饼干(战争)/清汤(纪录)/蛋包饭(家庭)/老火汤(历史)/汽水(音乐)/篝火烤肉(冒险)/牛排(西部); 分量portion: 一口/小食/正餐/大份/满汉全席; 店铺tier: 老字号/当红/隐藏菜单/家常; 熟成度age: 刚出锅/温热/常温/陈酿/老坛。返回的[bento:...]标记原样放进正文会渲染成便当卡。",
+    "description": "电影便当(精神食粮)厨房。action=pick 按用户的口味和你对TA近况的了解挑1-3部(默认排除吃过的); search 按片名/关键词/维度找; random 盲盒; detail 看某部详情; wish 记进食单(想看); log 记吃过了并打印小票(可带评分1-5、心情、一句话); wishlist 看食单; history 看吃过的。维度取值—菜系cuisine: 中餐/港片/日料/韩餐/美餐/法餐/意餐/英餐/泰餐/印度菜/伊朗菜/俄餐/德餐/西班牙菜/拉美菜/北欧菜; 菜色dish: 马卡龙(爱情)/河豚(恐怖)/生鱼片(惊悚)/螃蟹(悬疑)/炸鸡(喜剧)/茶泡饭(剧情)/铁板烧(动作)/分子料理(科幻)/棉花糖(奇幻)/熊饭团(动画)/卤煮(犯罪)/压缩饼干(战争)/清汤(纪录)/蛋包饭(家庭)/老火汤(历史)/汽水(音乐)/篝火烤肉(冒险)/牛排(西部); 分量portion: 一口/小食/正餐/大份/满汉全席; 店铺tier: 老字号/当红/隐藏菜单/家常; 熟成度age: 刚出锅/温热/常温/陈酿/老坛。返回的[bento:...]标记原样放进正文会渲染成便当卡。",
     "parameters": {"type": "object", "properties": {
         "action": {"type": "string", "enum": ["pick", "search", "random", "detail", "wish", "log", "wishlist", "history"]},
         "q": {"type": "string", "description": "片名(中文或原名)或主题关键词。注意: 片库的主题关键词是 TMDB 的英文词(如 insomnia/revenge/road trip), 按主题找请用英文; 中文只对片名有效"},
@@ -351,7 +355,7 @@ TOOL_DEF = {"type": "function", "function": {
         "min_rating": {"type": "number", "description": "最低分,默认6"},
         "limit": {"type": "integer", "description": "返回几部,默认3,最多6"},
         "film_id": {"type": "integer", "description": "detail/wish/log 用的 tmdb_id"},
-        "rating_me": {"type": "integer", "description": "log: Stella打的星(1-5)"}, "rating_k": {"type": "integer", "description": "log: 你打的星(1-5)"},
+        "rating_me": {"type": "integer", "description": "log: 用户打的星(1-5)"}, "rating_k": {"type": "integer", "description": "log: 你打的星(1-5)"},
         "note_me": {"type": "string", "description": "log: 她的一句话"}, "note_k": {"type": "string", "description": "log: 你的一句话"},
         "mood_in": {"type": "string", "description": "log: 入场心情一个词"}, "mood_out": {"type": "string", "description": "log: 散场心情一个词"},
         "quote": {"type": "string", "description": "log: 名台词"}, "watched_at": {"type": "string", "description": "log: 观影日期 YYYY-MM-DD, 默认今天"}},

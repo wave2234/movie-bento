@@ -262,7 +262,7 @@ await new Promise(res => setTimeout(res, Math.max(0, 900 - (Date.now() - t0))));
 字段:
 
 ```
-        猫窝影厅 · 票号 20260908-003
+        小客厅影厅 · 票号 20260908-003
               异 教 徒
          The Wicker Man · 1973
 - - - - - - - - - - - - - - - - - -
@@ -312,6 +312,23 @@ a.download = '便当小票.png'; a.href = cv.toDataURL('image/png'); a.click();
 ```
 
 图标一律用线条 SVG,不用 emoji —— emoji 在不同设备上长得不一样,而且会把精心调的灰度体系打乱。
+
+---
+
+## 八·五、改成你自己的称呼
+
+小票上的名字、抬头都是可配置的,不用改代码逻辑:
+
+```bash
+# 后端(可选, 有默认值)
+BENTO_USER_NAME=你的名字
+BENTO_AI_NAME=你的AI叫什么
+```
+
+```javascript
+// static/bento.html 顶部三行
+const USER_NAME='我', AI_NAME='TA', HALL_NAME='电影便当';
+```
 
 ---
 

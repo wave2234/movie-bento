@@ -200,6 +200,8 @@ h3.sec{font-size:.9rem;color:var(--mut);font-weight:500;margin:20px 0 8px}
 <div class="toast" id="toast"></div>
 
 <script>
+/* 想改称呼和厅名, 只动这三行 */
+const USER_NAME='我', AI_NAME='TA', HALL_NAME='电影便当';
 const TOKEN=localStorage.getItem('chat_token')||'';
 const $=s=>document.querySelector(s);
 const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -258,7 +260,7 @@ function renderFilm(){const f=cur,p=$('#pane');$('#ftitle').textContent=f.title|
   const done=f.logs&&f.logs.length?f.logs[0]:null;
   p.innerHTML='<div class="dhead"><img class="pst" alt="" src="'+pst(f,'w342')+'"><div style="flex:1;min-width:0;position:relative"><div class="t serif">'+esc(f.title)+'</div><div class="orig">'+esc(f.title_orig)+' ('+(f.year||'—')+')'+(f.tier&&f.tier!=='家常'?'<span class="tier">'+esc(f.tier)+'</span>':'')+'</div><div style="margin-top:6px">'+stars(f.rating,true)+'<span style="color:var(--mut);font-size:.75rem;margin-left:6px">'+(f.votes||0)+'人</span></div><div class="m">'+esc(meta)+'</div></div><div class="bigpaw">'+PAW.replace('fill="#c8755a"','fill="#c8755a" opacity=".11"')+'</div></div>'
   +'<div class="acts"><button class="btn lite'+(f.wished?' on':'')+'" id="bWish">'+(f.wished?'已在食单':'想看')+'</button><button class="btn lite'+(done?' on':'')+'" id="bLog">'+(done?'再吃一次':'看过')+'</button><button class="btn" id="bOpen">开饭</button></div>'
-  +(done?'<div class="done">'+PAW+'<span>看过了 · '+esc(done.watched_at)+(done.rating_me?' · 你打了 '+done.rating_me+' 星':'')+(done.source==='cinema'?' · 和 Kepler 在影院':'')+'</span></div>':'')
+  +(done?'<div class="done">'+PAW+'<span>看过了 · '+esc(done.watched_at)+(done.rating_me?' · 你打了 '+done.rating_me+' 星':'')+(done.source==='cinema'?' · 和 '+AI_NAME+' 在影院':'')+'</span></div>':'')
   +(f.tagline?'<h3 class="sec">一句话</h3><div class="ov" style="font-style:italic">'+esc(f.tagline)+'</div>':'')
   +'<h3 class="sec">简介</h3><div class="ov">'+esc(f.overview||'(暂无简介)')+'</div>'
   +((f.keywords||[]).length?'<h3 class="sec">配菜</h3><div class="kw">'+(f.keywords||[]).slice(0,14).map(k=>'<span>'+esc(k)+'</span>').join('')+'</div>':'')
@@ -270,7 +272,7 @@ function renderFilm(){const f=cur,p=$('#pane');$('#ftitle').textContent=f.title|
   if(done)$('#dRc').append(receipt(Object.assign({},done,{title:f.title,title_orig:f.title_orig,year:f.year,runtime:f.runtime,poster:f.poster,backdrop:f.backdrop,cuisine:f.cuisine,dishes:f.dishes,portion:f.portion})));
 }
 function logForm(f){const p=$('#pane2');let rm=0,rk=0;const today=new Date();const ds=today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
-  p.innerHTML='<div class="grab"></div><h2 class="serif" style="margin:0 0 2px">打印小票</h2><div class="sub" style="color:var(--mut);font-size:.82rem">《'+esc(f.title)+'》'+(f.year||'')+'</div><div class="f"><label>观影日期</label><input id="lDate" type="date" value="'+ds+'"><div class="two"><div><label>你打几星</label><div class="pick" id="pm"></div></div><div><label>他打几星</label><div class="pick" id="pk"></div></div></div><div class="two"><div><label>入场心情</label><input id="lIn" placeholder="一个词"></div><div><label>散场心情</label><input id="lOut" placeholder="一个词"></div></div><label>名台词</label><input id="lQ" placeholder="记住的那一句"><label>你的一句话</label><textarea id="lMe"></textarea><label>他的一句话</label><textarea id="lK" placeholder="也可以让他在聊天里用 bento log 自己写"></textarea><div class="row-actions"><button class="btn ac" id="lGo">打印</button></div></div>';
+  p.innerHTML='<div class="grab"></div><h2 class="serif" style="margin:0 0 2px">打印小票</h2><div class="sub" style="color:var(--mut);font-size:.82rem">《'+esc(f.title)+'》'+(f.year||'')+'</div><div class="f"><label>观影日期</label><input id="lDate" type="date" value="'+ds+'"><div class="two"><div><label>你打几星</label><div class="pick" id="pm"></div></div><div><label>TA打几星</label><div class="pick" id="pk"></div></div></div><div class="two"><div><label>入场心情</label><input id="lIn" placeholder="一个词"></div><div><label>散场心情</label><input id="lOut" placeholder="一个词"></div></div><label>名台词</label><input id="lQ" placeholder="记住的那一句"><label>你的一句话</label><textarea id="lMe"></textarea><label>他的一句话</label><textarea id="lK" placeholder="也可以让 AI 在聊天里用 bento log 自己写"></textarea><div class="row-actions"><button class="btn ac" id="lGo">打印</button></div></div>';
   const mk=(id,get,set)=>{const b=p.querySelector(id);b.innerHTML=STAR.repeat(5);[...b.children].forEach((s,i)=>{s.onclick=()=>{set(i+1);[...b.children].forEach((x,j)=>x.classList.toggle('on',j<get()))}})};
   mk('#pm',()=>rm,v=>rm=v);mk('#pk',()=>rk,v=>rk=v);
   $('#lGo').onclick=async()=>{try{await api('/api/bento/log',{method:'POST',body:JSON.stringify({film_id:f.tmdb_id,watched_at:$('#lDate').value,rating_me:rm||null,rating_k:rk||null,mood_in:$('#lIn').value,mood_out:$('#lOut').value,quote:$('#lQ').value,note_me:$('#lMe').value,note_k:$('#lK').value,source:'manual'})});closeSheet2();toast('小票打印好了');cur=await api('/api/bento/film/'+f.tmdb_id);renderFilm();loadReceipts();loadWish()}catch(e){toast(e.message)}};
@@ -282,8 +284,8 @@ function receipt(l){const d=document.createElement('div');d.className='rc';const
   +'<div class="kv"><span>分量</span><span>'+esc([l.portion,l.runtime?l.runtime+' 分钟':''].filter(Boolean).join(' · '))+'</span></div><div class="kv"><span>菜系</span><span>'+esc([l.cuisine,(l.dishes||[]).join('/')].filter(Boolean).join(' · '))+'</span></div><div class="kv"><span>场次</span><span>'+esc(l.watched_at||'')+(l.source==='cinema'?' · 影院':'')+'</span></div><div class="kv"><span>座位</span><span>沙发 A1 · A2</span></div>'
   +((l.mood_in||l.mood_out)?'<div class="kv"><span>心情</span><span>'+esc(l.mood_in||'—')+' → '+esc(l.mood_out||'—')+'</span></div>':'')
   +(l.quote?'<div class="q">'+esc(l.quote)+'</div>':'')+'<div class="dash"></div>'
-  +(l.note_me?'<div class="say"><b>Stella</b>'+esc(l.note_me)+'</div>':'')+(l.note_k?'<div class="say"><b>Kepler</b>'+esc(l.note_k)+'</div>':'')
-  +'<div class="kv" style="margin-top:8px"><span>Stella</span><span>'+stars5(l.rating_me)+'</span></div><div class="kv"><span>Kepler</span><span>'+stars5(l.rating_k)+'</span></div>'
+  +(l.note_me?'<div class="say"><b>'+USER_NAME+'</b>'+esc(l.note_me)+'</div>':'')+(l.note_k?'<div class="say"><b>'+AI_NAME+'</b>'+esc(l.note_k)+'</div>':'')
+  +'<div class="kv" style="margin-top:8px"><span>'+USER_NAME+'</span><span>'+stars5(l.rating_me)+'</span></div><div class="kv"><span>'+AI_NAME+'</span><span>'+stars5(l.rating_k)+'</span></div>'
   +'<div class="bar"></div><div class="foot">精神食粮 · 已验票</div><div class="stamp">'+PAW+'</div></div>';
   d.querySelector('img').onerror=function(){this.style.display='none'};
   d.querySelector('.save').onclick=async(e)=>{e.stopPropagation();if(!window.html2canvas){toast('图片组件还没加载好');return}const btn=e.target;btn.style.visibility='hidden';try{const cv=await html2canvas(d,{useCORS:true,scale:2,backgroundColor:'#fff'});const a=document.createElement('a');a.download='便当小票-'+(l.title||'')+'.png';a.href=cv.toDataURL('image/png');a.click();toast('存好了')}catch(err){toast('存图失败: '+err.message)}btn.style.visibility=''};
